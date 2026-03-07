@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/backend/" />
+  <Folder Name="/backend/Api/">
+    <Project Path="backend/Api/WorkflowApproval.Api/WorkflowApproval.Api.csproj" />
+  </Folder>
+  <Folder Name="/backend/Application/">
+    <Project Path="backend/Application/WorkflowApproval.Application/WorkflowApproval.Application.csproj" />
+  </Folder>
+  <Folder Name="/backend/Domain/">
+    <Project Path="backend/Domain/WorkflowApproval.Domain/WorkflowApproval.Domain.csproj" />
+  </Folder>
+  <Folder Name="/backend/Infrastructure/">
+    <Project Path="backend/Infrastructure/WorkflowApproval.Infrastructure/WorkflowApproval.Infrastructure.csproj" />
+  </Folder>
+</Solution>
