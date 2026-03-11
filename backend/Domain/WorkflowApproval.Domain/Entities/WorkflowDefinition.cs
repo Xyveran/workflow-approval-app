@@ -6,5 +6,6 @@ public class WorkflowDefinition
     public Guid RequestTypeId { get; set; }
     public string Name { get; set; }
     public bool isActive { get; set; }
-    public List<WorkflowStep> Steps { get; set; }
+    public RequestType RequestType { get; set; }
+    public ICollection<WorkflowStep> Steps { get; set; }
 }

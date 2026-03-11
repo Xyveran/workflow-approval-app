@@ -12,7 +12,7 @@ using WorkflowApproval.Infrastructure.Data;
 namespace WorkflowApproval.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260307092619_InitialCreate")]
+    [Migration("20260311075857_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -99,6 +99,26 @@ namespace WorkflowApproval.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RequestTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            Description = "Request to purchase goods or services",
+                            Name = "Purchase Request"
+                        },
+                        new
+                        {
+                            Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            Description = "Employee leave or vacation request",
+                            Name = "Leave Request"
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                            Description = "Reimbursement of goods or services",
+                            Name = "Expense Reimbursement"
+                        });
                 });
 
             modelBuilder.Entity("WorkflowApproval.Domain.Entities.Role", b =>
@@ -114,6 +134,28 @@ namespace WorkflowApproval.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            Name = "Manager"
+                        },
+                        new
+                        {
+                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
+                            Name = "Finance"
+                        },
+                        new
+                        {
+                            Id = new Guid("44444444-4444-4444-4444-444444444444"),
+                            Name = "Employee"
+                        });
                 });
 
             modelBuilder.Entity("WorkflowApproval.Domain.Entities.User", b =>
@@ -142,6 +184,16 @@ namespace WorkflowApproval.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-999999999999"),
+                            Department = "Manager",
+                            Email = "",
+                            Name = "Test Manager",
+                            RoleId = new Guid("22222222-2222-2222-2222-222222222222")
+                        });
                 });
 
             modelBuilder.Entity("WorkflowApproval.Domain.Entities.WorkflowCondition", b =>
@@ -193,7 +245,18 @@ namespace WorkflowApproval.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RequestTypeId");
+
                     b.ToTable("WorkflowDefinitions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                            Name = "Purchase Request Workflow",
+                            RequestTypeId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            isActive = false
+                        });
                 });
 
             modelBuilder.Entity("WorkflowApproval.Domain.Entities.WorkflowStep", b =>
@@ -205,13 +268,8 @@ namespace WorkflowApproval.Infrastructure.Migrations
                     b.Property<bool>("AllowParallelApprovals")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("RoleRequired")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("StepOrder")
                         .HasColumnType("integer");
@@ -227,6 +285,35 @@ namespace WorkflowApproval.Infrastructure.Migrations
                     b.HasIndex("WorkflowDefinitionId");
 
                     b.ToTable("WorkflowSteps");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+                            AllowParallelApprovals = false,
+                            RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            StepOrder = 1,
+                            StepType = 0,
+                            WorkflowDefinitionId = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd")
+                        },
+                        new
+                        {
+                            Id = new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+                            AllowParallelApprovals = false,
+                            RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            StepOrder = 2,
+                            StepType = 0,
+                            WorkflowDefinitionId = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd")
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-999999999999"),
+                            AllowParallelApprovals = false,
+                            RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            StepOrder = 3,
+                            StepType = 0,
+                            WorkflowDefinitionId = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd")
+                        });
                 });
 
             modelBuilder.Entity("WorkflowApproval.Domain.Entities.User", b =>
@@ -249,13 +336,31 @@ namespace WorkflowApproval.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("WorkflowApproval.Domain.Entities.WorkflowDefinition", b =>
+                {
+                    b.HasOne("WorkflowApproval.Domain.Entities.RequestType", "RequestType")
+                        .WithMany("Workflows")
+                        .HasForeignKey("RequestTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RequestType");
+                });
+
             modelBuilder.Entity("WorkflowApproval.Domain.Entities.WorkflowStep", b =>
                 {
-                    b.HasOne("WorkflowApproval.Domain.Entities.WorkflowDefinition", null)
+                    b.HasOne("WorkflowApproval.Domain.Entities.WorkflowDefinition", "WorkflowDefinition")
                         .WithMany("Steps")
                         .HasForeignKey("WorkflowDefinitionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("WorkflowDefinition");
+                });
+
+            modelBuilder.Entity("WorkflowApproval.Domain.Entities.RequestType", b =>
+                {
+                    b.Navigation("Workflows");
                 });
 
             modelBuilder.Entity("WorkflowApproval.Domain.Entities.Role", b =>

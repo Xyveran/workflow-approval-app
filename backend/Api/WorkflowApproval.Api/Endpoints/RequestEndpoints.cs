@@ -12,7 +12,7 @@ public static class RequestEndpoints
             IWorkflowService service) =>
         {
             var id = await service.SubmitRequest(dto);
-            return Results.Ok(id);
+            return TypedResults.Ok(id);
         });
     }
 }
