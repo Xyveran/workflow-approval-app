@@ -2,5 +2,5 @@ namespace WorkflowApproval.Application.DTOs;
 
 public class RejectRequestDto
 {
-    public string Reason { get; set; }
+    public required string Reason { get; set; }
 }
