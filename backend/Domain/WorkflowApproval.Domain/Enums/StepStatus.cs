@@ -7,4 +7,5 @@ public enum StepStatus
     Approved,
     Rejected,
     Skipped,
+    NotStarted
 }
