@@ -6,6 +6,6 @@ public class RequestDto
 {
     public Guid Id { get; set; }
     public required string Title { get; set; }
-    public required StepStatus Status { get; set; }
+    public required RequestStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
 }
