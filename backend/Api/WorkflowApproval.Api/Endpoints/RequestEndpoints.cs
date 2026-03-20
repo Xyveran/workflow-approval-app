@@ -11,9 +11,11 @@ public static class RequestEndpoints
 {
     public static void MapRequestEndpoints(this WebApplication app)
     {
-        // Submit a request
-        app.MapPost("/requests", async Task<Results<Ok<object>, BadRequest<object>>>(
-            [FromBody] CreateRequestDto dto, [FromServices] IWorkflowService workflowService) =>
+        // Submit a new request
+        app.MapPost("/requests", 
+        async Task<Results<Ok<object>, BadRequest<object>>>(
+            [FromBody] CreateRequestDto dto, 
+            [FromServices] IWorkflowService workflowService) =>
         {
             if (dto == null)
                 return TypedResults.BadRequest<object>(new { Error = "Request payload is required." });
@@ -23,10 +25,12 @@ public static class RequestEndpoints
         })
         .WithTags("Requests")
         .WithName("SubmitRequest");
-        
+
         // Approve a request
-        app.MapPost("/requests/approve", async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
-            [FromBody] WorkflowActionDto dto, [FromServices] IWorkflowService workflowService) =>
+        app.MapPost("/requests/approve", 
+        async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
+            [FromBody] WorkflowActionDto dto,
+            [FromServices] IWorkflowService workflowService) =>
         {
             if (dto == null)
                 return TypedResults.BadRequest<object>(new { Error = "Request payload is required." });
@@ -42,8 +46,10 @@ public static class RequestEndpoints
         .WithName("ApproveRequest");
 
         // Reject a request
-        app.MapPost("/requests/reject", async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
-            [FromBody] WorkflowActionDto dto, [FromServices] IWorkflowService workflowService) =>
+        app.MapPost("/requests/reject", 
+        async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
+            [FromBody] WorkflowActionDto dto,
+            [FromServices] IWorkflowService workflowService) =>
         {
             if (dto == null)
                 return TypedResults.BadRequest<object>(new { Error = "Request payload is required." });
@@ -58,11 +64,13 @@ public static class RequestEndpoints
         .WithTags("Requests")
         .WithName("RejectRequest");
         
-        // Add a comment
-        app.MapPost("/requests/comment", async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
-            [FromBody] CommentDto dto, [FromServices] IWorkflowService workflowService) =>
+        // Add a comment to a request
+        app.MapPost("/requests/comment", 
+        async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
+            [FromBody] CommentDto dto,
+            [FromServices] IWorkflowService workflowService) =>
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Comment))
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Comments))
                 return TypedResults.BadRequest<object>(new { Error = "Comment cannot be empty." });
 
             var success = await workflowService.CommentOnRequest(dto.RequestId, dto.UserId, dto.Comments);
@@ -74,5 +82,29 @@ public static class RequestEndpoints
         })
         .WithTags("Requests")
         .WithName("CommentOnRequest");
+
+        // Get a single request's full timeline by ID
+        app.MapGet("/requests/{id:guid}", 
+        async Task<Results<Ok<RequestTimelineDto>, NotFound<object>>>(
+            Guid id, [FromServices] IWorkflowService workflowService) =>
+        {
+            var timeline = await workflowService.GetRequestTimeline(id);
+            if (timeline == null)
+                return TypedResults.NotFound<object>(new { Error = "Request not found."});
+            
+            return TypedResults.Ok(timeline);
+        })
+        .WithTags("Requests")
+        .WithName("GetRequestTimeline");
+
+        // Get all pending requests visible to a given role
+        app.MapGet("/requests/pending/{roleId:guid}", 
+        async (Guid roleId, [FromServices] IWorkflowService workflowService) =>
+        {
+            var requests = await workflowService.GetPendingRequests(roleId);
+            return TypedResults.Ok(requests);
+        })
+        .WithTags("Requests")
+        .WithName("GetPendingRequests");;
     }
 }
