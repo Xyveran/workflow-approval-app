@@ -10,8 +10,11 @@ public interface IWorkflowDbContext
     DbSet<Request> Requests { get; }
     DbSet<RequestType> RequestTypes { get; }
     DbSet<WorkflowDefinition> WorkflowDefinitions { get; }
-    DbSet<WorkflowStep> WorkflowSteps { get; }
-    DbSet<ApprovalAction> ApprovalActions { get; }
+    DbSet<WorkflowStepDefinition> WorkflowStepDefinitions { get; }
+    DbSet<WorkflowStepInstance> WorkflowStepInstances { get; }
+    DbSet<WorkflowInstance> WorkflowInstances { get; }
 
+    DbSet<ApprovalAction> ApprovalActions { get; }
+    DbSet<WorkflowRule> WorkflowRules { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
