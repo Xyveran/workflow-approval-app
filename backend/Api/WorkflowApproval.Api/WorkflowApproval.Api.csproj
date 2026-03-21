@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Application\WorkflowApproval.Application\WorkflowApproval.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\WorkflowApproval.Infrastructure\WorkflowApproval.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Contracts\WorkflowApproval.Contracts\WorkflowApproval.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
