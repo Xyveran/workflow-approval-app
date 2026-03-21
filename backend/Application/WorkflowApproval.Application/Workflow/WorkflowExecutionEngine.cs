@@ -38,6 +38,7 @@ public class WorkflowExecutionEngine
             {
                 Id = Guid.NewGuid(),
                 WorkflowInstanceId = instance.Id,
+                WorkflowStepId = step.Id,
                 RoleId = step.RoleId,
                 StepOrder = step.StepOrder,
                 Status = step.StepOrder == 1 ? StepStatus.Pending : StepStatus.NotStarted
@@ -72,8 +73,8 @@ public class WorkflowExecutionEngine
         foreach (var step in remainingSteps)
         {
             var rules = await _dbContext.WorkflowRules
-            .Where(r => r.WorkflowStepId == step.WorkflowStepId)
-            .ToListAsync();
+                .Where(r => r.WorkflowStepId == step.WorkflowStepId)
+                .ToListAsync();
 
             bool stepApplies = !rules.Any() || 
                 rules.All(r => WorkflowRuleEvaluator.Evaluate(request.Amount ?? 0, r));
@@ -88,6 +89,7 @@ public class WorkflowExecutionEngine
         }
         
         instance.Status = StepStatus.Approved;
+        request.CurrentStep = current.StepOrder;
     }
 
     public async Task RejectStep(Guid requestId)

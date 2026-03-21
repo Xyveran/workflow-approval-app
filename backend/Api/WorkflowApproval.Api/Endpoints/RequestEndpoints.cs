@@ -1,9 +1,9 @@
-using WorkflowApproval.Application.DTOs;
 using WorkflowApproval.Application.Interfaces;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.HttpResults;
+using WorkflowApproval.Contracts.Requests;
+using WorkflowApproval.Contracts.Responses;
+using WorkflowApproval.Api.Mappers;
 
 namespace WorkflowApproval.Api.Endpoints;
 
@@ -14,13 +14,13 @@ public static class RequestEndpoints
         // Submit a new request
         app.MapPost("/requests", 
         async Task<Results<Ok<object>, BadRequest<object>>>(
-            [FromBody] CreateRequestDto dto, 
+            [FromBody] CreateRequestContract contract, 
             [FromServices] IWorkflowService workflowService) =>
         {
-            if (dto == null)
+            if (contract == null)
                 return TypedResults.BadRequest<object>(new { Error = "Request payload is required." });
 
-            var requestId = await workflowService.SubmitRequest(dto);
+            var requestId = await workflowService.SubmitRequest(contract.ToInternalDto());
             return TypedResults.Ok<object>(new { RequestId = requestId });
         })
         .WithTags("Requests")
@@ -29,13 +29,13 @@ public static class RequestEndpoints
         // Approve a request
         app.MapPost("/requests/approve", 
         async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
-            [FromBody] WorkflowActionDto dto,
+            [FromBody] WorkflowActionContract contract,
             [FromServices] IWorkflowService workflowService) =>
         {
-            if (dto == null)
+            if (contract == null)
                 return TypedResults.BadRequest<object>(new { Error = "Request payload is required." });
 
-            var success = await workflowService.ApproveRequest(dto.RequestId, dto.UserId, dto.Comments);
+            var success = await workflowService.ApproveRequest(contract.RequestId, contract.UserId, contract.Comments);
             
             if (!success)
                 return TypedResults.NotFound<object>(new { Error = "Request not found or already processed." });            
@@ -48,13 +48,13 @@ public static class RequestEndpoints
         // Reject a request
         app.MapPost("/requests/reject", 
         async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
-            [FromBody] WorkflowActionDto dto,
+            [FromBody] WorkflowActionContract contract,
             [FromServices] IWorkflowService workflowService) =>
         {
-            if (dto == null)
+            if (contract == null)
                 return TypedResults.BadRequest<object>(new { Error = "Request payload is required." });
 
-            var success = await workflowService.RejectRequest(dto.RequestId, dto.UserId, dto.Comments);
+            var success = await workflowService.RejectRequest(contract.RequestId, contract.UserId, contract.Comments);
 
             if (!success)
                 return TypedResults.NotFound<object>(new { Message = "Request not found or already processed." });
@@ -67,13 +67,14 @@ public static class RequestEndpoints
         // Add a comment to a request
         app.MapPost("/requests/comment", 
         async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
-            [FromBody] CommentDto dto,
+            [FromBody] CommentContract contract,
             [FromServices] IWorkflowService workflowService) =>
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Comments))
+            if (contract == null || string.IsNullOrWhiteSpace(contract.Comments))
                 return TypedResults.BadRequest<object>(new { Error = "Comment cannot be empty." });
 
-            var success = await workflowService.CommentOnRequest(dto.RequestId, dto.UserId, dto.Comments);
+            var internalDto = contract.ToInternalDto();
+            var success = await workflowService.CommentOnRequest(internalDto.RequestId, internalDto.UserId, internalDto.Comments);
 
             if (!success)
                 return TypedResults.NotFound<object>(new { Message = "Request not found." });
@@ -85,14 +86,14 @@ public static class RequestEndpoints
 
         // Get a single request's full timeline by ID
         app.MapGet("/requests/{id:guid}", 
-        async Task<Results<Ok<RequestTimelineDto>, NotFound<object>>>(
+        async Task<Results<Ok<RequestTimelineContract>, NotFound<object>>>(
             Guid id, [FromServices] IWorkflowService workflowService) =>
         {
             var timeline = await workflowService.GetRequestTimeline(id);
             if (timeline == null)
                 return TypedResults.NotFound<object>(new { Error = "Request not found."});
             
-            return TypedResults.Ok(timeline);
+            return TypedResults.Ok(timeline.ToContract());
         })
         .WithTags("Requests")
         .WithName("GetRequestTimeline");
@@ -102,7 +103,7 @@ public static class RequestEndpoints
         async (Guid roleId, [FromServices] IWorkflowService workflowService) =>
         {
             var requests = await workflowService.GetPendingRequests(roleId);
-            return TypedResults.Ok(requests);
+            return TypedResults.Ok(requests.Select(r => r.ToContract()).ToList());
         })
         .WithTags("Requests")
         .WithName("GetPendingRequests");;

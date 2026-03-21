@@ -9,7 +9,7 @@ public interface IWorkflowService
     Task<bool> RejectRequest(Guid requestId, Guid userId, string? comments);
     Task<bool> CommentOnRequest(Guid requestId, Guid userId, string comment);
     Task<RequestTimelineDto?> GetRequestTimeline(Guid requestId);
-    Task<List<RequestTimelineDto>> GetPendingRequests(Guid roleId);
+    Task<List<PendingRequestDto>> GetPendingRequests(Guid roleId);
     Task<WorkflowAnalyticsDto> GetWorkflowAnalytics();
     Task<WorkflowBottleneckDto> GetWorkflowBottlenecks();
 }

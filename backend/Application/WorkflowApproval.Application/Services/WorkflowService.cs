@@ -4,6 +4,7 @@ using WorkflowApproval.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using WorkflowApproval.Domain.Enums;
 using WorkflowApproval.Application.Workflow;
+using System.Security.Cryptography;
 
 namespace WorkflowApproval.Application.Services;
 
@@ -41,6 +42,7 @@ public class WorkflowService : IWorkflowService
             Amount = dto.Amount,
             Status = RequestStatus.Pending,
             CreatedAt = DateTime.UtcNow,
+            CreatedBy = dto.SubmittedBy,
             CurrentStep = 1
         };
 
@@ -159,6 +161,8 @@ public class WorkflowService : IWorkflowService
             .Include(w => w.Steps)
             .FirstOrDefaultAsync(w => w.RequestId == requestId);
 
+        var approvalActions = request.ApprovalActions ?? new List<ApprovalAction>();
+
         var timelineSteps = workflowInstance?.Steps
             .OrderBy(s => s.StepOrder)
             .Select(step => new TimelineStepDto
@@ -166,7 +170,18 @@ public class WorkflowService : IWorkflowService
                 StepOrder = step.StepOrder,
                 RoleId = step.RoleId,
                 Status = step.Status,
-                CompletedAt = step.CompletedAt
+                CompletedAt = step.CompletedAt,
+
+                Actions = approvalActions
+                    .Where(a => a.StepOrder == step.StepOrder)
+                    .Select(a => new TimelineActionDto
+                    {
+                        UserId = a.UserId,
+                        Action = a.Action,
+                        Comments = a.Comments,
+                        Timestamp = a.ActionDate
+                    }).ToList()
+
             }).ToList() ?? new List<TimelineStepDto>();
 
         return new RequestTimelineDto
@@ -190,7 +205,7 @@ public class WorkflowService : IWorkflowService
         };
     }
 
-    public async Task<List<RequestTimelineDto>> GetPendingRequests(Guid roleId)
+    public async Task<List<PendingRequestDto>> GetPendingRequests(Guid roleId)
     {
         var pendingRequestIds = await _dbContext.WorkflowInstances
             .Include(w => w.Steps)
@@ -202,9 +217,10 @@ public class WorkflowService : IWorkflowService
             .Where(r => pendingRequestIds.Contains(r.Id))
             .ToListAsync();
 
-        return requests.Select(r => new RequestTimelineDto
+        return requests.Select(r => new PendingRequestDto
         {
             RequestId = r.Id,
+            Title = r.Title,
             Status = r.Status,
             CurrentStep = r.CurrentStep,
             CreatedAt = r.CreatedAt

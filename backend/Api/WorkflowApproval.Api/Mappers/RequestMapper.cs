@@ -15,7 +15,8 @@ public static class RequestMapper
             Title = contract.Title,
             Description = contract.Description,
             Amount = contract.Amount,
-            AttachmentIds = contract.AttachmentIds
+            AttachmentIds = contract.AttachmentIds,
+            SubmittedBy = contract.SubmittedBy // wired from contract currently
         };
 
     public static CommentDto ToInternalDto(this CommentContract contract) =>
@@ -31,9 +32,8 @@ public static class RequestMapper
 
     // Outbound: Internal DTO -> Response Contract
 
-    public static RequestTimelineContract ToContract(this RequestTimelineDto dto)
-    {
-        return new()
+    public static RequestTimelineContract ToContract(this RequestTimelineDto dto) =>
+        new()
         {
             RequestId = dto.RequestId,
             Status = (Contracts.Enums.RequestStatus)dto.Status,
@@ -43,7 +43,6 @@ public static class RequestMapper
             Steps = dto.Steps.Select(s => s.ToContract()).ToList()
 
         };
-    }
 
     public static ApprovalActionContract ToContract(this ApprovalActionDto dto) => 
         new()
@@ -72,5 +71,15 @@ public static class RequestMapper
             Action = (Contracts.Enums.ApprovalActionType)dto.Action,
             Comments = dto.Comments,
             Timestamp = dto.Timestamp  
+        };
+
+    public static PendingRequestContract ToContract(this PendingRequestDto dto) =>
+        new()
+        {
+            RequestId = dto.RequestId,
+            Title = dto.Title,
+            Status = (Contracts.Enums.StepStatus)dto.Status,
+            CurrentStep = dto.CurrentStep,
+            CreatedAt = dto.CreatedAt
         };
 }
