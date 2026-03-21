@@ -6,6 +6,9 @@
   <Folder Name="/backend/Application/">
     <Project Path="backend/Application/WorkflowApproval.Application/WorkflowApproval.Application.csproj" />
   </Folder>
+  <Folder Name="/backend/Contracts/">
+    <Project Path="backend/Contracts/WorkflowApproval.Contracts/WorkflowApproval.Contracts.csproj" />
+  </Folder>
   <Folder Name="/backend/Domain/">
     <Project Path="backend/Domain/WorkflowApproval.Domain/WorkflowApproval.Domain.csproj" />
   </Folder>
