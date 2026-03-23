@@ -1,3 +1,4 @@
+using Namotion.Reflection;
 using WorkflowApproval.Application.DTOs;
 using WorkflowApproval.Contracts.Requests;
 using WorkflowApproval.Contracts.Responses;
@@ -19,6 +20,17 @@ public static class RequestMapper
             SubmittedBy = contract.SubmittedBy // wired from contract currently
         };
 
+    public static UpdateRequestDto ToInternalDto(this UpdateRequestContract contract) =>
+        new ()
+        {
+            RequestId = contract.RequestId,
+            RequestedBy = contract.RequestedBy,
+            Title = contract.Title,
+            Description = contract.Description,
+            Amount = contract.Amount,
+            AttachmentIds = contract.AttachmentIds
+        };
+
     public static CommentDto ToInternalDto(this CommentContract contract) =>
         new()
         {
@@ -32,6 +44,18 @@ public static class RequestMapper
 
     // Outbound: Internal DTO -> Response Contract
 
+    public static RequestContract ToContract(this RequestDto dto) =>
+        new()
+        {
+            Id = dto.Id,
+            RequestTypeId = dto.RequestTypeId,
+            Title = dto.Title,
+            Status = (Contracts.Enums.RequestStatus)dto.Status,
+            CurrentStep = dto.CurrentStep,
+            CreatedAt = dto.CreatedAt,
+            CompletedAt = dto.CompletedAt
+        };
+
     public static RequestTimelineContract ToContract(this RequestTimelineDto dto) =>
         new()
         {
@@ -41,7 +65,6 @@ public static class RequestMapper
             CreatedAt = dto.CreatedAt,
             Timeline = dto.Timeline.Select(a => a.ToContract()).ToList(),
             Steps = dto.Steps.Select(s => s.ToContract()).ToList()
-
         };
 
     public static ApprovalActionContract ToContract(this ApprovalActionDto dto) => 
@@ -62,7 +85,7 @@ public static class RequestMapper
             Status = (Contracts.Enums.StepStatus)dto.Status,
             CompletedAt = dto.CompletedAt,
             Actions = dto.Actions.Select(a => a.ToContract()).ToList()        
-    };
+        };
     
     public static TimelineActionContract ToContract(this TimelineActionDto dto) =>
         new()
@@ -78,7 +101,7 @@ public static class RequestMapper
         {
             RequestId = dto.RequestId,
             Title = dto.Title,
-            Status = (Contracts.Enums.StepStatus)dto.Status,
+            Status = (Contracts.Enums.RequestStatus)dto.Status,
             CurrentStep = dto.CurrentStep,
             CreatedAt = dto.CreatedAt
         };

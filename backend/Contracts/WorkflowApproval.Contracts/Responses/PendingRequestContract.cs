@@ -6,7 +6,7 @@ public class PendingRequestContract
 {
     public Guid RequestId { get; set; }
     public required string Title { get; set; }
-    public StepStatus Status { get; set; }
+    public RequestStatus Status { get; set; }
     public int CurrentStep { get; set; }
     public DateTime CreatedAt { get; set; }
 }

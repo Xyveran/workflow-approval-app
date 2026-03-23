@@ -4,7 +4,7 @@ using WorkflowApproval.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using WorkflowApproval.Domain.Enums;
 using WorkflowApproval.Application.Workflow;
-using System.Security.Cryptography;
+using System.Xml;
 
 namespace WorkflowApproval.Application.Services;
 
@@ -226,6 +226,54 @@ public class WorkflowService : IWorkflowService
             CreatedAt = r.CreatedAt
         }).ToList();
     }
+
+    public async Task<List<RequestDto>> GetRequestsByUser(Guid userId)
+    {
+        return await _dbContext.Requests
+            .Where(r => r.CreatedBy == userId)
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new RequestDto
+            {
+                Id = r.Id,
+                RequestTypeId = r.RequestTypeId,
+                Title = r.Title,
+                Status = r.Status,
+                CurrentStep = r.CurrentStep,
+                CreatedAt = r.CreatedAt,
+                CompletedAt = r.CompletedAt
+            }).ToListAsync();
+    }
+
+    public async Task<bool> UpdateRequest(UpdateRequestDto dto)
+    {
+        var request = await _dbContext.Requests.FindAsync(dto.RequestId);
+
+        if (request == null)
+            return false;
+
+        if (request.CreatedBy != dto.RequestedBy)
+            return false;
+
+        if (request.Status != RequestStatus.Pending)
+            return false;
+
+        if (dto.Title is not null)
+            request.Title = dto.Title;
+
+        if (dto.Description is not null)
+            request.Description = dto.Description;
+
+        if (dto.Amount is not null)
+            request.Amount = dto.Amount;
+
+        // AttachmentIds are not stored on Request directly; this is a hook for when
+        // attachment handling is implemented. Currently accepted but not persisted
+
+        await _dbContext.SaveChangesAsync();
+        return true;
+    }
+
+
 
     public Task<WorkflowAnalyticsDto> GetWorkflowAnalytics() =>
         _analyticsService.GetWorkflowAnalytics();

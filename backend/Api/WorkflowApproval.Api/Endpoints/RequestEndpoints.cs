@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using WorkflowApproval.Contracts.Requests;
 using WorkflowApproval.Contracts.Responses;
 using WorkflowApproval.Api.Mappers;
+using System.Security.Cryptography.X509Certificates;
 
 namespace WorkflowApproval.Api.Endpoints;
 
@@ -25,6 +26,29 @@ public static class RequestEndpoints
         })
         .WithTags("Requests")
         .WithName("SubmitRequest");
+
+        // Update a pending request (submitter only)
+        app.MapPut("/requests/{id:guid}",
+        async Task<Results<Ok<object>, BadRequest<object>, NotFound<object>>>(
+            Guid id,
+            [FromBody] UpdateRequestContract contract,
+            [FromServices] IWorkflowService workflowService) =>
+        {
+            if (contract == null)
+                return TypedResults.BadRequest<object>(new { Error = "Request payload is required."});
+
+            if (contract.RequestId != id)
+                return TypedResults.BadRequest<object>(new { Error = "Route id does not match payload RequestId."});
+            
+            var success = await workflowService.UpdateRequest(contract.ToInternalDto());
+
+            if (!success)
+                return TypedResults.NotFound<object>(new { Error = "Request not found, not editable, or user is not the submitter."});
+            
+            return TypedResults.Ok<object>(new { Message = "Request updated."});
+        })
+        .WithTags("Requests")
+        .WithName("UpdateRequest");       
 
         // Approve a request
         app.MapPost("/requests/approve", 
@@ -97,6 +121,17 @@ public static class RequestEndpoints
         })
         .WithTags("Requests")
         .WithName("GetRequestTimeline");
+
+        // Get all requests submitted by a given user
+        app.MapGet("/requests/user/{userId:guid}",
+        async (Guid userId, [FromServices] IWorkflowService workflowService) =>
+        {
+            var requests = await workflowService.GetRequestsByUser(userId);
+
+            return TypedResults.Ok(requests.Select(r => r.ToContract()).ToList());
+        })
+        .WithTags("Requests")
+        .WithName("GetRequestsByUser");
 
         // Get all pending requests visible to a given role
         app.MapGet("/requests/pending/{roleId:guid}", 
